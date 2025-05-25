@@ -5,6 +5,7 @@ import { Content, Link, User } from "./db";
 import bcrypt from 'bcrypt';
 import Jwt from "jsonwebtoken";
 import { middleware } from "./middleware";
+import { random } from "./utils";
 
 const app = express();
 app.use(express.json())
@@ -144,6 +145,70 @@ app.delete("/api/v1/content" , middleware , async (req,res) => {
     });
 });
 
+app.post("/api/v1/brain/share", middleware , async (req, res) => {
+    const share = req.body.share;
+
+    if(share){
+        const existingLink = await Link.findOne({
+            userId : req.userId
+        });
+
+        if(existingLink){
+            res.json({
+                hash : existingLink.hash
+            });
+        }else{
+
+            const hash  = random(10);
+
+            await Link.create({
+                hash : hash,
+                userId : req.userId
+            });
+
+            res.status(200).json({hash });
+            return;
+        }
+    }else{
+        await Link.deleteOne({
+            userId : req.userId
+        });
+
+        res.json({
+            message : "Sharable Link removed"
+        })
+    }
+});
+
+
+app.get("/api/v1/brain/:shareLink" , middleware , async (req, res) => {
+    const hash = req.params.shareLink;
+
+    const link = await Link.findOne({
+        hash : hash
+    })
+
+    if(!link){
+        res.status(411).json({
+            message : "Please send right link"
+        });
+        return;
+    };
+
+    const content = await Content.findOne({
+        userId : link.userId
+    });
+
+    const user = await User.findOne({
+        _id : link.userId
+    });
+
+
+    res.json({
+        username : user?.username,
+        content : content 
+    });
+})
 
 
 
