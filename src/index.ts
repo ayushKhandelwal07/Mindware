@@ -6,9 +6,11 @@ import bcrypt from 'bcrypt';
 import Jwt from "jsonwebtoken";
 import { middleware } from "./middleware";
 import { random } from "./utils";
+import cors from "cors"; 
 
 const app = express();
-app.use(express.json())
+app.use(express.json());
+app.use(cors());
 
 //sign-in endpoint
 app.post("/api/v1/sign-up" ,async (req,res) => {
